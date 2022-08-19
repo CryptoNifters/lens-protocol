@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "lens-protocol-brownie"
+version = "0.1.0"
+description = "This is a complete deployment implementation of official Lens Protocol using Brownie and Python."
+authors = ["Jeevan Jamakayala <jeevan.jamakayala@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.11"
+eth-brownie = "^1.19.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
