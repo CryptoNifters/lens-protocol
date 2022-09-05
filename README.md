@@ -47,12 +47,12 @@ This is a complete deployment implementation of official
 [Lens Protocol](https://github.com/lens-protocol/lens-protocol) using 
 [Brownie](https://github.com/eth-brownie/brownie) and Python.
 
-Note: This repo is still in development, once completed the whole official Lens Protocol 
+Note: This repo is still in development, once completed the whole official Lens Protocol
 will be ported to Brownie-Python from HardHat-TypeScript.
 
 ### To do
 
-- [ ]  Update the full deployment to fix the smart contract verification
+- [x]  Update the full deployment to fix the smart contract verification
 - [ ]  Create the docker image & docker deployment
 - [ ]  Write the test cases
 
