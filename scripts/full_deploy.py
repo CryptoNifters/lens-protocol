@@ -8,8 +8,10 @@ import json
 from distutils.util import strtobool
 
 from brownie import accounts, web3, network, project, Contract
-
 from dotenv import load_dotenv
+
+from helpers.custom_verification import publish_source
+
 
 # Load environment variables
 load_dotenv()
@@ -84,40 +86,20 @@ def main():
     publishingLogic = lenshubProject.PublishingLogic.deploy(
         {"from": deployer, "nonce": deployerNonce}, publish_source=CONTRACT_VERIFICATION
     )
+    publishingLogicAddress = deployer.get_deployment_address(deployerNonce)
     deployerNonce += 1
 
     interactionLogic = lenshubProject.InteractionLogic.deploy(
         {"from": deployer, "nonce": deployerNonce}, publish_source=CONTRACT_VERIFICATION
     )
+    interactionLogicAddress = deployer.get_deployment_address(deployerNonce)
     deployerNonce += 1
 
     profileTokenURILogic = lenshubProject.ProfileTokenURILogic.deploy(
         {"from": deployer, "nonce": deployerNonce}, publish_source=CONTRACT_VERIFICATION
     )
+    profileTokenURILogicAddress = deployer.get_deployment_address(deployerNonce)
     deployerNonce += 1
-
-    # Updating the LensHub Bytecode to replace the Logic Libs addresses
-    lhcjson = json.load(open("build/contracts/LensHub.json", "r", encoding="utf-8"))
-    _bytecode_lh = lhcjson["deployedBytecode"]
-    # Update PublishingLogic address
-    _bytecode_lh = _bytecode_lh.replace(
-        "__$1f7cbacb1f9f5d323b85b0487838426c8d$__",
-        publishingLogic.address.replace("0x", "").lower(),
-    )
-
-    # Update InteractionLogic address
-    _bytecode_lh = _bytecode_lh.replace(
-        "__$1e68a60ae0444699fe08192a29ecc09930$__",
-        interactionLogic.address.replace("0x", "").lower(),
-    )
-
-    # Update ProfileTokenURILogic address
-    _bytecode_lh = _bytecode_lh.replace(
-        "__$f906f20d797116ee89ed79945048c6ad36$__",
-        profileTokenURILogic.address.replace("0x", "").lower(),
-    )
-    lhcjson["deployedBytecode"] = _bytecode_lh
-    json.dump(lhcjson, open("build/contracts/LensHub.json", "w", encoding="utf-8"))
 
     # Here, we pre-compute the nonces and addresses used to deploy the contracts.
     followNFTNonce = deployerNonce + 1
@@ -134,10 +116,12 @@ def main():
     lensHubImpl = lenshubProject.LensHub.deploy(
         followNFTImplAddress,
         collectNFTImplAddress,
-        {"from": deployer, "nonce": deployerNonce},
-        publish_source=CONTRACT_VERIFICATION,
+        {"from": deployer, "nonce": deployerNonce}
     )
     deployerNonce += 1
+    # Using custom verification because Brownie fails to verify the LensHub implementation 
+    # with libraries.
+    publish_source(lenshubProject.LensHub, lensHubImpl)
 
     print("-- Deploying Follow & Collect NFT Implementations")
     lenshubProject.FollowNFT.deploy(
@@ -167,6 +151,10 @@ def main():
         {"from": deployer, "nonce": deployerNonce},
     )
     deployerNonce += 1
+    # Using custom verification because Brownie fails to verify the LensHub implementation 
+    # with libraries.
+    publish_source(lenshubProject.TransparentUpgradeableProxy, proxy)
+    
 
     # Connect the hub proxy to the LensHub factory and the governance for ease of use.
     lensHub = Contract.from_abi("LensHub", proxy.address, lensHubImpl.abi, governance)
@@ -175,6 +163,7 @@ def main():
     lensPeriphery = lenshubProject.LensPeriphery.deploy(
         lensHub.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -182,6 +171,7 @@ def main():
     print("-- Deploying Currency")
     currency = lenshubProject.Currency.deploy(
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -191,6 +181,7 @@ def main():
         lensHub.address,
         moduleGlobals.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -199,6 +190,7 @@ def main():
         lensHub.address,
         moduleGlobals.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -207,6 +199,7 @@ def main():
         lensHub.address,
         moduleGlobals.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -215,12 +208,14 @@ def main():
         lensHub.address,
         moduleGlobals.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
     print("-- Deploying revertCollectModule")
     revertCollectModule = lenshubProject.RevertCollectModule.deploy(
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -228,6 +223,7 @@ def main():
     freeCollectModule = lenshubProject.FreeCollectModule.deploy(
         lensHub.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -237,6 +233,7 @@ def main():
         lensHub.address,
         moduleGlobals.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -244,6 +241,7 @@ def main():
     profileFollowModule = lenshubProject.ProfileFollowModule.deploy(
         lensHub.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -251,6 +249,7 @@ def main():
     revertFollowModule = lenshubProject.RevertFollowModule.deploy(
         lensHub.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -259,6 +258,7 @@ def main():
     followerOnlyReferenceModule = lenshubProject.FollowerOnlyReferenceModule.deploy(
         lensHub.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -267,6 +267,7 @@ def main():
     uiDataProvider = lenshubProject.UIDataProvider.deploy(
         lensHub.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -275,6 +276,7 @@ def main():
         profileCreatorAddress,
         lensHub.address,
         {"from": deployer, "nonce": deployerNonce},
+        publish_source=CONTRACT_VERIFICATION,
     )
     deployerNonce += 1
 
@@ -285,7 +287,7 @@ def main():
     lensHub.whitelistCollectModule(
         feeCollectModule.address,
         True,
-        {"from": governance, "nonce": governanceNonce},
+        {"from": governance, "nonce": governanceNonce}
     )
     governanceNonce += 1
 
@@ -326,7 +328,9 @@ def main():
 
     print("-- Whitelisting follow modules")
     lensHub.whitelistFollowModule(
-        feeFollowModule.address, True, {"from": governance, "nonce": governanceNonce}
+        feeFollowModule.address,
+        True,
+        {"from": governance, "nonce": governanceNonce},
     )
     governanceNonce += 1
 
